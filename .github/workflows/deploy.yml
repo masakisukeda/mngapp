@@ -1,0 +1,58 @@
+name: mng-deploy
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: mng-deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Ensure Core Files Exist
+        run: |
+          test -f index.html
+          test -f mng.html
+          test -f manual.html
+          test -f lp/index.html
+
+      - name: Install lftp
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lftp
+
+      - name: Deploy via FTP
+        env:
+          FTP_HOST: ${{ secrets.MNG_FTP_HOST }}
+          FTP_USER: ${{ secrets.MNG_FTP_USER }}
+          FTP_PASS: ${{ secrets.MNG_FTP_PASS }}
+          FTP_BASE: ${{ secrets.MNG_FTP_BASE }}
+        run: |
+          if [ -z "$FTP_HOST" ] || [ -z "$FTP_USER" ] || [ -z "$FTP_PASS" ] || [ -z "$FTP_BASE" ]; then
+            echo "MNG_FTP_HOST / MNG_FTP_USER / MNG_FTP_PASS / MNG_FTP_BASE が未設定です" >&2
+            exit 1
+          fi
+
+          lftp -u "$FTP_USER","$FTP_PASS" "$FTP_HOST" -e "
+            set ftp:ssl-allow no;
+            set ssl:verify-certificate no;
+            mkdir -p $FTP_BASE;
+            mirror -R --verbose --only-newer \
+              --exclude-glob .git\\* \
+              --exclude-glob .github\\* \
+              --exclude-glob .DS_Store \
+              --exclude-glob AGENTS.md \
+              --exclude-glob '*.gsheet' \
+              ./ $FTP_BASE;
+            bye
+          "
