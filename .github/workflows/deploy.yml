@@ -38,21 +38,60 @@ jobs:
           FTP_PASS: ${{ secrets.MNG_FTP_PASS }}
           FTP_BASE: ${{ secrets.MNG_FTP_BASE }}
         run: |
-          if [ -z "$FTP_HOST" ] || [ -z "$FTP_USER" ] || [ -z "$FTP_PASS" ] || [ -z "$FTP_BASE" ]; then
-            echo "MNG_FTP_HOST / MNG_FTP_USER / MNG_FTP_PASS / MNG_FTP_BASE が未設定です" >&2
+          FTP_HOST="${FTP_HOST:-s137.coreserver.jp}"
+
+          if [ -z "$FTP_USER" ] || [ -z "$FTP_PASS" ]; then
+            echo "MNG_FTP_USER / MNG_FTP_PASS が未設定です" >&2
             exit 1
           fi
 
-          lftp -u "$FTP_USER","$FTP_PASS" "$FTP_HOST" -e "
-            set ftp:ssl-allow no;
-            set ssl:verify-certificate no;
-            mkdir -p $FTP_BASE;
-            mirror -R --verbose --only-newer \
-              --exclude-glob .git\\* \
-              --exclude-glob .github\\* \
-              --exclude-glob .DS_Store \
-              --exclude-glob AGENTS.md \
-              --exclude-glob '*.gsheet' \
-              ./ $FTP_BASE;
-            bye
-          "
+          if [ -z "$FTP_BASE" ]; then
+            FTP_BASE="/virtual/sukeda/public_html/mng"
+          fi
+
+          CANDIDATES=("$FTP_BASE")
+          if [[ "$FTP_BASE" == *"/drsp.cc/"* ]]; then
+            CANDIDATES+=("${FTP_BASE/\/drsp.cc\//\/}")
+          fi
+          CANDIDATES+=("/virtual/sukeda/public_html/mng" "/public_html/mng")
+
+          UNIQUE_CANDIDATES=()
+          for c in "${CANDIDATES[@]}"; do
+            skip=0
+            for u in "${UNIQUE_CANDIDATES[@]}"; do
+              if [ "$u" = "$c" ]; then
+                skip=1
+                break
+              fi
+            done
+            if [ "$skip" -eq 0 ]; then
+              UNIQUE_CANDIDATES+=("$c")
+            fi
+          done
+
+          success=0
+          for base in "${UNIQUE_CANDIDATES[@]}"; do
+            echo "try deploy base: $base"
+            if lftp -u "$FTP_USER","$FTP_PASS" "$FTP_HOST" -e "
+              set ftp:ssl-allow no;
+              set ssl:verify-certificate no;
+              mkdir -p $base;
+              mirror -R --verbose --only-newer \
+                --exclude-glob .git\\* \
+                --exclude-glob .github\\* \
+                --exclude-glob .DS_Store \
+                --exclude-glob AGENTS.md \
+                --exclude-glob '*.gsheet' \
+                ./ $base;
+              bye
+            "; then
+              success=1
+              echo "deploy succeeded: $base"
+              break
+            fi
+          done
+
+          if [ "$success" -ne 1 ]; then
+            echo "all deploy candidates failed" >&2
+            exit 1
+          fi
