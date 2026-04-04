@@ -6,7 +6,7 @@
 - 共通指示書: `/Users/masakisukeda/Library/CloudStorage/GoogleDrive-masaki.sukeda@gmail.com/マイドライブ/Playground/AGENTS.md`
 - スコープは `/app` `/chat` `/dic` `/mng` のみ。無関係フォルダの編集・デプロイは禁止。
 - **このフォルダ以外へ絶対にデプロイしないこと**。
-- デプロイはFTP経由。`/mng` 以外へアップロードしないこと。
+- 通常デプロイは `main` へ push -> GitHub Actions で実施（直接FTPアップロードは禁止）。
 
 ## 1. 対象
 - 公開URL: `https://drsp.cc/mng/mng.html`
@@ -32,6 +32,20 @@
   - `/mng/mng.html`
   - `/mng/manual.html`
   - `/mng/lp/`
+
+## デプロイ完遂ルール
+
+ユーザーへの確認不要。自己完結で実施し結果のみ報告すること。
+
+1. push -> GitHub Actions完了を待つ
+2. `curl -I https://drsp.cc/mng/mng.html` でHTTP 200を確認
+3. 不具合があれば即座にロールバック:
+```bash
+git revert HEAD --no-edit
+git push origin main
+```
+
+報告フォーマット: `✅ デプロイ完了` / `❌ ロールバック実施済み／原因：〇〇`
 
 ## 4. NG
 - 無関係な全体リデザイン。
