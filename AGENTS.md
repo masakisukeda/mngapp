@@ -8,7 +8,7 @@
 - **このフォルダ以外へ絶対にデプロイしないこと**。
 - 通常デプロイは `main` へ push -> GitHub Actions で実施（直接FTPアップロードは禁止）。
 - `mng-deploy` の反映先は `/public_html/drsp.cc/mng` を正とする（ここへの転送成功を優先し、それ以外のみで成功扱いにしない）。
-- `mng-deploy` は `.git` `.github` `.gitignore` `.DS_Store` `AGENTS.md` など運用・機密寄りファイルを転送しない設定を維持する。
+- `mng-deploy` は軽量運用として、必須ファイル（`.htaccess` `index.html` `mng.html` `manual.html` と `lp/`）のみを転送する。
 - `.htaccess` のセキュリティヘッダ（`CSP` `X-Frame-Options` `nosniff` など）は削除しない。
 
 ## 1. 対象

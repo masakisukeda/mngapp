@@ -73,16 +73,14 @@ jobs:
               set cmd:fail-exit yes;
               set ftp:ssl-allow no;
               mkdir -p $base;
+              mkdir -p $base/lp;
+              put -O $base .htaccess;
+              put -O $base index.html;
+              put -O $base mng.html;
+              put -O $base manual.html;
               mirror -R --verbose --only-newer \
-                --exclude-glob '.git' \
-                --exclude-glob '.git/**' \
-                --exclude-glob '.github' \
-                --exclude-glob '.github/**' \
                 --exclude-glob '.DS_Store' \
-                --exclude-glob '.gitignore' \
-                --exclude-glob 'AGENTS.md' \
-                --exclude-glob '*.gsheet' \
-                ./ $base;
+                ./lp $base/lp;
               bye
             "; then
               success=1
