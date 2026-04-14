@@ -168,6 +168,14 @@
       </div>
       <div class="card" style="max-width:800px;">
         <div class="sec-title" style="margin-bottom:16px;">販管費（月別）設定</div>
+        <div style="display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap;margin-bottom:12px;">
+          <div class="f" style="min-width:220px;">
+            <label>販管費 一括入力（円）</label>
+            <input type="text" id="set-hkg-all" placeholder="例：500,000" inputmode="numeric" autocomplete="off" oninput="fmtSettingsInput(this,'set-hkg-all-prev')" onfocus="fmtSettingsInputFocus(this)" onblur="fmtSettingsInputBlur(this,'set-hkg-all-prev')">
+            <div id="set-hkg-all-prev" style="font-family:var(--mono);font-size:11px;color:var(--muted2);margin-top:3px;min-height:16px;"></div>
+          </div>
+          <div class="btn" style="margin-top:18px;" onclick="applyHKGAll()">全月に反映</div>
+        </div>
         <div id="set-hkg" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;"></div>
         <div class="mf" style="padding: 16px 0 0;"><div class="btn pri" onclick="saveHKG()">販管費を保存する</div></div>
       </div>
@@ -589,6 +597,24 @@ function updateSettingsAmountPreview(previewId, num) {
   const p = document.getElementById(previewId);
   if (!p) return;
   p.textContent = num > 0 ? '= ' + num.toLocaleString() + ' 円' : '';
+}
+function applyHKGAll() {
+  const allEl = document.getElementById('set-hkg-all');
+  if (!allEl) return;
+  const num = parseSettingNum(allEl.value);
+  if (num <= 0) {
+    toast('一括入力する販管費を入力してください', 'err');
+    return;
+  }
+  PL_MONTHS.forEach(({ y, m }) => {
+    const key = mkkey(y, m);
+    const el = document.getElementById('hkg-' + key);
+    if (!el) return;
+    el.value = num.toLocaleString();
+    updateSettingsAmountPreview('hkg-prev-' + key, num);
+  });
+  updateSettingsBudgetSummary();
+  toast('販管費を全月に反映しました');
 }
 function updateSettingsBudgetSummary() {
   let totalTarget = 0;
