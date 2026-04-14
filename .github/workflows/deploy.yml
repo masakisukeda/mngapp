@@ -46,14 +46,16 @@ jobs:
           fi
 
           if [ -z "$FTP_BASE" ]; then
-            FTP_BASE="/virtual/sukeda/public_html/mng"
+            FTP_BASE="/virtual/sukeda/public_html/drsp.cc/mng"
           fi
 
           CANDIDATES=("$FTP_BASE")
-          if [[ "$FTP_BASE" == *"/drsp.cc/"* ]]; then
-            CANDIDATES+=("${FTP_BASE/\/drsp.cc\//\/}")
-          fi
-          CANDIDATES+=("/virtual/sukeda/public_html/mng" "/public_html/mng")
+          CANDIDATES+=(
+            "/virtual/sukeda/public_html/drsp.cc/mng"
+            "/public_html/drsp.cc/mng"
+            "/virtual/sukeda/public_html/mng"
+            "/public_html/mng"
+          )
 
           UNIQUE_CANDIDATES=()
           for c in "${CANDIDATES[@]}"; do

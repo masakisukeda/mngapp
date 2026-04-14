@@ -7,6 +7,7 @@
 - スコープは `/app` `/chat` `/dic` `/mng` のみ。無関係フォルダの編集・デプロイは禁止。
 - **このフォルダ以外へ絶対にデプロイしないこと**。
 - 通常デプロイは `main` へ push -> GitHub Actions で実施（直接FTPアップロードは禁止）。
+- `mng-deploy` の反映先は `/public_html/drsp.cc/mng` を正とする（旧 `/public_html/mng` は互換候補扱い）。
 
 ## 1. 対象
 - 公開URL: `https://drsp.cc/mng/mng.html`
