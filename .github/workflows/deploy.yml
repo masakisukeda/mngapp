@@ -45,17 +45,12 @@ jobs:
             exit 1
           fi
 
-          if [ -z "$FTP_BASE" ]; then
-            FTP_BASE="/virtual/sukeda/public_html/drsp.cc/mng"
+          PRIMARY_BASE="/virtual/sukeda/public_html/drsp.cc/mng"
+          CANDIDATES=("$PRIMARY_BASE")
+          if [ -n "$FTP_BASE" ] && [ "$FTP_BASE" != "$PRIMARY_BASE" ]; then
+            CANDIDATES+=("$FTP_BASE")
           fi
-
-          CANDIDATES=("$FTP_BASE")
-          CANDIDATES+=(
-            "/virtual/sukeda/public_html/drsp.cc/mng"
-            "/public_html/drsp.cc/mng"
-            "/virtual/sukeda/public_html/mng"
-            "/public_html/mng"
-          )
+          CANDIDATES+=("/public_html/drsp.cc/mng")
 
           UNIQUE_CANDIDATES=()
           for c in "${CANDIDATES[@]}"; do
