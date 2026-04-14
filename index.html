@@ -148,6 +148,24 @@
         <div id="set-targets" style="display:flex;flex-direction:column;gap:12px;"></div>
         <div class="mf" style="padding: 16px 0 0;"><div class="btn pri" onclick="saveTargets()">目標を保存する</div></div>
       </div>
+      <div class="card" style="margin-bottom:24px; max-width:800px;">
+        <div class="sec-title" style="margin-bottom:10px;">ざっくり予算サマリー</div>
+        <div style="font-size:11px;color:var(--muted2);margin-bottom:14px;">粗利目標合算 - 販管費合算 = 営業利益合算（見込み）</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;">
+          <div style="background:var(--paper3);border:1px solid var(--line);border-radius:6px;padding:12px;">
+            <div style="font-size:10px;color:var(--muted2);margin-bottom:6px;">目標設定（予算）合算</div>
+            <div id="set-sum-targets" style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--g);">0</div>
+          </div>
+          <div style="background:var(--paper3);border:1px solid var(--line);border-radius:6px;padding:12px;">
+            <div style="font-size:10px;color:var(--muted2);margin-bottom:6px;">販管費（月別）設定 合算</div>
+            <div id="set-sum-hkg" style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--muted);">0</div>
+          </div>
+          <div style="background:var(--paper3);border:1px solid var(--line);border-radius:6px;padding:12px;">
+            <div style="font-size:10px;color:var(--muted2);margin-bottom:6px;">営業利益 合算</div>
+            <div id="set-sum-eigyo" style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--g);">0</div>
+          </div>
+        </div>
+      </div>
       <div class="card" style="max-width:800px;">
         <div class="sec-title" style="margin-bottom:16px;">販管費（月別）設定</div>
         <div id="set-hkg" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;"></div>
@@ -545,6 +563,7 @@ function renderSettings() {
     const el = document.getElementById('hkg-' + key);
     if (el) updateSettingsAmountPreview('hkg-prev-' + key, parseSettingNum(el.value));
   });
+  updateSettingsBudgetSummary();
 }
 
 function parseSettingNum(v) {
@@ -555,6 +574,7 @@ function fmtSettingsInput(el, previewId) {
   const num = parseInt(raw, 10) || 0;
   el.value = raw === '' ? '' : num.toLocaleString();
   updateSettingsAmountPreview(previewId, num);
+  updateSettingsBudgetSummary();
 }
 function fmtSettingsInputFocus(el) {
   el.value = el.value.replace(/,/g, '');
@@ -563,11 +583,40 @@ function fmtSettingsInputBlur(el, previewId) {
   const num = parseSettingNum(el.value);
   el.value = num > 0 ? num.toLocaleString() : '';
   updateSettingsAmountPreview(previewId, num);
+  updateSettingsBudgetSummary();
 }
 function updateSettingsAmountPreview(previewId, num) {
   const p = document.getElementById(previewId);
   if (!p) return;
   p.textContent = num > 0 ? '= ' + num.toLocaleString() + ' 円' : '';
+}
+function updateSettingsBudgetSummary() {
+  let totalTarget = 0;
+  SETTINGS.categories.forEach(c => {
+    const uriEl = document.getElementById('tgt-uri-' + c);
+    const arariEl = document.getElementById('tgt-arari-' + c);
+    const tgtUri = uriEl ? parseSettingNum(uriEl.value) : Number(SETTINGS.targets[c]?.tgtUri || SETTINGS.targets[c]?.tgt || 0);
+    const tgtArari = arariEl ? parseSettingNum(arariEl.value) : Number(SETTINGS.targets[c]?.tgtArari || 0);
+    totalTarget += tgtArari > 0 ? tgtArari : tgtUri;
+  });
+
+  let totalHkg = 0;
+  PL_MONTHS.forEach(({ y, m }) => {
+    const key = mkkey(y, m);
+    const hkgEl = document.getElementById('hkg-' + key);
+    totalHkg += hkgEl ? parseSettingNum(hkgEl.value) : Number(HKG[key] || 0);
+  });
+
+  const totalEigyo = totalTarget - totalHkg;
+  const tgtEl = document.getElementById('set-sum-targets');
+  const hkgEl = document.getElementById('set-sum-hkg');
+  const eigyoEl = document.getElementById('set-sum-eigyo');
+  if (tgtEl) tgtEl.textContent = fmt(totalTarget) + ' 円';
+  if (hkgEl) hkgEl.textContent = fmt(totalHkg) + ' 円';
+  if (eigyoEl) {
+    eigyoEl.textContent = fmtSign(totalEigyo) + ' 円';
+    eigyoEl.style.color = totalEigyo >= 0 ? 'var(--g)' : 'var(--r)';
+  }
 }
 
 async function saveMaster() {

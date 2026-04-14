@@ -37,13 +37,14 @@
 
 ユーザーへの確認不要。自己完結で実施し結果のみ報告すること。
 
-1. push -> GitHub Actions完了を待つ
-2. `curl -I https://drsp.cc/mng/mng.html` でHTTP 200を確認
+1. push -> GitHub Actions完了を待つ（`gh run list --branch main --limit 5` / `gh run watch --exit-status`）
+2. `curl -I https://drsp.cc/mng/mng.html` でHTTP 200を確認（必要に応じて `Last-Modified` も確認）
 3. 不具合があれば即座にロールバック:
 ```bash
 git revert HEAD --no-edit
 git push origin main
 ```
+4. push が `non-fast-forward` の場合は `git fetch` -> `git rebase origin/main` 後に再pushする
 
 報告フォーマット: `✅ デプロイ完了` / `❌ ロールバック実施済み／原因：〇〇`
 
