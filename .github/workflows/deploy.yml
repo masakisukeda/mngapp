@@ -70,14 +70,17 @@ jobs:
           for base in "${UNIQUE_CANDIDATES[@]}"; do
             echo "try deploy base: $base"
             if lftp -u "$FTP_USER","$FTP_PASS" "$FTP_HOST" -e "
+              set cmd:fail-exit yes;
               set ftp:ssl-allow no;
-              set ssl:verify-certificate no;
               mkdir -p $base;
               mirror -R --verbose --only-newer \
-                --exclude-glob .git\\* \
-                --exclude-glob .github\\* \
-                --exclude-glob .DS_Store \
-                --exclude-glob AGENTS.md \
+                --exclude-glob '.git' \
+                --exclude-glob '.git/**' \
+                --exclude-glob '.github' \
+                --exclude-glob '.github/**' \
+                --exclude-glob '.DS_Store' \
+                --exclude-glob '.gitignore' \
+                --exclude-glob 'AGENTS.md' \
                 --exclude-glob '*.gsheet' \
                 ./ $base;
               bye
