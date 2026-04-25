@@ -91,6 +91,7 @@
     <div class="mobile-menu-item" onclick="nav('deals',this); closeMobileMenu()">案件管理</div>
     <div class="mobile-menu-item" onclick="nav('kpi',this); closeMobileMenu()">課題</div>
     <div class="mobile-menu-item" onclick="nav('settings',this); closeMobileMenu()">設定・マスタ</div>
+    <div class="mobile-menu-item" onclick="syncNowFromMobileMenu()">最新データを同期</div>
     <div class="mobile-menu-item" onclick="openManual(); closeMobileMenu()">マニュアル</div>
   </div>
   <div class="mobile-menu-foot">
@@ -1842,6 +1843,9 @@ function applyInitialNavFromHash(){
 
 const GAS_TIMEOUT_MS = 8000;
 const GAS_TIMEOUT_STEPS = [8000, 16000];
+const AUTO_SYNC_MIN_INTERVAL_MS = 30000;
+let lastAutoSyncAt = 0;
+let isSyncInFlight = false;
 
 function fetchWithTimeout(url, options = {}, timeoutMs = GAS_TIMEOUT_MS) {
   const controller = new AbortController();
@@ -1923,7 +1927,9 @@ async function testGasUrl() {
 
 async function loadFromGAS(options = {}) {
   const { showLoading = true, successToast = true } = options;
+  if (isSyncInFlight) return;
   if (!USE_GAS) { updateSyncBadge('local'); renderAll(); return; }
+  isSyncInFlight = true;
   if (showLoading) setLoading(true);
   updateSyncBadge('syncing');
   let lastError = null;
@@ -1987,7 +1993,26 @@ async function loadFromGAS(options = {}) {
     renderAll();
   } finally {
     if (showLoading) setLoading(false);
+    isSyncInFlight = false;
   }
+}
+
+function syncNowFromMobileMenu() {
+  closeMobileMenu();
+  if (!USE_GAS) {
+    updateSyncBadge('local');
+    toast('GAS URL未設定のためローカルモードです', 'warn');
+    return;
+  }
+  loadFromGAS({ showLoading: true, successToast: true });
+}
+
+function syncOnForeground() {
+  if (!USE_GAS) return;
+  const now = Date.now();
+  if (now - lastAutoSyncAt < AUTO_SYNC_MIN_INTERVAL_MS) return;
+  lastAutoSyncAt = now;
+  loadFromGAS({ showLoading: false, successToast: false });
 }
 
 async function gasPost(payload, retries = 1) {
@@ -2414,11 +2439,17 @@ window.onload=()=>{
   buildDashboard();
   applyInitialNavFromHash();
   if (USE_GAS) {
+    lastAutoSyncAt = Date.now();
     loadFromGAS({ showLoading: false, successToast: false });
   } else {
     renderAll();
   }
 };
+window.addEventListener('focus', syncOnForeground);
+window.addEventListener('pageshow', syncOnForeground);
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') syncOnForeground();
+});
 </script>
 </body>
 </html>
