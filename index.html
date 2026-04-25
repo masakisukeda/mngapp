@@ -363,6 +363,7 @@ const lsKey = (k) => 'disa_' + TENANT_ID + '__' + k;
 const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbxZ53Ll5n7NeWvsaM3pKdF53K7KOBe-EWrkRR0ePT2-ghNlUvG_yOccGXFckasdwmYT/exec';
 const GAS_URL_KEY = lsKey('gas_url');
 const GAS_URL_FIXED_KEY = lsKey('gas_url_fixed');
+const LAST_VIEW_KEY = lsKey('last_view');
 function isValidGasUrl(url) {
   return /^https:\/\/script\.google\.com\/macros\/s\/[^/]+\/exec(?:[?#].*)?$/.test(String(url || '').trim());
 }
@@ -1835,6 +1836,7 @@ function nav(id,el){
   const viewEl = document.getElementById('v-'+id);
   if (!viewEl) return;
   viewEl.classList.add('on');
+  localStorage.setItem(LAST_VIEW_KEY, id);
   if (id === 'deals') {
     initSelects();
     initMonthFilter();
@@ -1849,11 +1851,20 @@ function nav(id,el){
 }
 function applyInitialNavFromHash(){
   const m = String(window.location.hash || '').match(/^#v-([a-z0-9_-]+)$/i);
-  if (!m) return;
+  if (!m) return false;
   const id = m[1];
   const target = document.querySelector(`.hdr-item[onclick="nav('${id}',this)"]`);
-  if (!target) return;
+  if (!target) return false;
   nav(id, target);
+  return true;
+}
+function applyInitialNavFromSaved(){
+  const id = String(localStorage.getItem(LAST_VIEW_KEY) || '').trim();
+  if (!id) return false;
+  const target = document.querySelector(`.hdr-item[onclick="nav('${id}',this)"]`);
+  if (!target) return false;
+  nav(id, target);
+  return true;
 }
 
 
@@ -2453,7 +2464,7 @@ function closeMobileMenu() {
 function openManual(){ window.open('https://drsp.cc/app/mng/manual.html', '_blank', 'noopener,noreferrer'); }
 window.onload=()=>{
   buildDashboard();
-  applyInitialNavFromHash();
+  if (!applyInitialNavFromHash()) applyInitialNavFromSaved();
   if (USE_GAS) {
     lastAutoSyncAt = Date.now();
     loadFromGAS({ showLoading: false, successToast: false });
