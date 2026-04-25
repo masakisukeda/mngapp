@@ -37,6 +37,12 @@
 .kpi-drag-handle:hover { opacity: 1; }
 
 .hdr-brand img { display: block; height: 24px; width: auto; }
+[data-theme=light] .header { background: var(--paper2); border-bottom: 1px solid var(--line); }
+[data-theme=light] .hdr-item { color: var(--muted2); }
+[data-theme=light] .hdr-item:hover { color: var(--ink); background: rgba(0,0,0,.03); }
+[data-theme=light] .hdr-item.on { color: var(--ink); background: rgba(0,0,0,.04); }
+[data-theme=light] .mobile-menu-btn { color: var(--ink); }
+[data-theme=light] .top-profit-wrap { color: var(--muted2) !important; }
 @media (max-width: 820px) {
   .header { flex-direction: row !important; height: 56px !important; padding: 0 16px !important; align-items: center !important; justify-content: space-between !important; }
   .hdr-l { flex-direction: row !important; align-items: center !important; width: auto !important; }
